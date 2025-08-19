@@ -12,15 +12,15 @@ def set_api_key(api_key: str):
     openai.api_key = api_key
 
 def get_transcript(video_url: str) -> str:
-    """Fetch YouTube transcript as plain text."""
     if "v=" in video_url:
         video_id = video_url.split("v=")[-1]
     else:
         video_id = video_url.split("/")[-1]
 
-    # Use list_transcripts() and fetch_transcript() methods instead
-    transcript = YouTubeTranscriptApi.get_transcript(video_id)
-    return " ".join([t["text"] for t in transcript])
+    transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
+    transcript = transcripts.find_transcript(['en'])  # adjust languages as needed
+    transcript_data = transcript.fetch()
+    return " ".join([t["text"] for t in transcript_data])
 
 def chunk_text(text: str, chunk_size=1000, overlap=100):
     """Split transcript into overlapping chunks."""
