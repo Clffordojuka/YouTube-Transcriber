@@ -19,7 +19,7 @@ with st.sidebar:
         openai_api_key = st.text_input(
             label="OpenAI API Key",
             key="openai_api_key",
-            max_chars=100,
+            max_chars=200,
             type="password"
         )
         "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
