@@ -9,7 +9,7 @@ with st.sidebar:
     with st.form(key='my_form'):
         youtube_url = st.text_area(
             label="What is the YouTube video URL?",
-            max_chars=100
+            max_chars=200
         )
         query = st.text_area(
             label="Ask me about the video?",

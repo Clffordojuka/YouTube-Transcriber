@@ -17,6 +17,7 @@ def get_transcript(video_url: str) -> str:
         video_id = video_url.split("v=")[-1]
     else:
         video_id = video_url.split("/")[-1]
+
     transcript = YouTubeTranscriptApi.get_transcript(video_id)
     return " ".join([t["text"] for t in transcript])
 
