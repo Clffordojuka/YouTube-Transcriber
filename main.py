@@ -34,7 +34,18 @@ if submit_button and query and youtube_url:
         lch.set_api_key(openai_api_key)
 
         try:
+            # Add debug information
+            st.info("Fetching transcript...")
+            transcript = lch.get_transcript(youtube_url)
+            
+            if not transcript:
+                st.error("Could not fetch transcript. Please check if the video has captions available.")
+                st.stop()
+                
+            st.info("Creating database...")
             db = lch.create_db_from_youtube(youtube_url)
+            
+            st.info("Getting response...")
             response, docs = lch.get_response_from_query(db, query)
 
             st.subheader("📌 Answer:")
@@ -46,3 +57,6 @@ if submit_button and query and youtube_url:
 
         except Exception as e:
             st.error(f"Error: {e}")
+            # Add more detailed error information
+            import traceback
+            st.error(f"Detailed error: {traceback.format_exc()}")
