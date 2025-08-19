@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# Environment
+.env
+venv/
+.env.local
+.DS_Store
+
+# Docker
+*.log
+*.pid
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VSCode / IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
