@@ -3,7 +3,7 @@ import streamlit as st
 import langextract_helper as lch
 import textwrap
 
-st.title("🎥 YouTube Assistant (LangExtract Edition)")
+st.title("🎥 YouTube Transcriber (LangExtract Edition)")
 
 with st.sidebar:
     with st.form(key='my_form'):
