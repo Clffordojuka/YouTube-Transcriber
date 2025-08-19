@@ -18,8 +18,9 @@ def get_transcript(video_url: str) -> str:
     else:
         video_id = video_url.split("/")[-1]
 
-    # Create instance of YouTubeTranscriptApi
-    transcript = YouTubeTranscriptApi.get_transcript(video_id)
+    # Use list_transcripts() and fetch_transcript() methods instead
+    transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+    transcript = transcript_list.find_transcript(['en']).fetch()
     return " ".join([t["text"] for t in transcript])
 
 def chunk_text(text: str, chunk_size=1000, overlap=100):
