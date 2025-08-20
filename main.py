@@ -1,5 +1,5 @@
 import streamlit as st
-import langextract_helper as lch
+import langextract_helper as lch 
 import textwrap
 import os
 from openai import OpenAI
@@ -49,13 +49,12 @@ if submit_button:
     os.environ["OPENAI_API_KEY"] = openai_api_key
     client = OpenAI()
 
-    # Display a spinner while processing
     with st.spinner("Fetching transcript and generating response..."):
         try:
-            # Create vector database from YouTube transcript
+            # Create FAISS index and vector DB from transcript (embedding done via OpenAI SDK inside helper)
             db = lch.create_db_from_youtube_video_url(youtube_url)
 
-            # Get answer to the user's query based on transcript
+            # Query and get answer
             response, docs = lch.get_response_from_query(db, query)
 
             st.subheader("Answer:")
