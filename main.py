@@ -1,62 +1,64 @@
-# main.py
 import streamlit as st
 import langextract_helper as lch
 import textwrap
+import os
+from openai import OpenAI
 
-st.title("🎥 YouTube Transcriber (LangExtract Edition)")
+st.set_page_config(page_title="YouTube Transcriber", page_icon="🎥")
+
+st.title("YouTube Transcriber")
 
 with st.sidebar:
-    with st.form(key='my_form'):
+    st.header("Input Parameters")
+    with st.form(key="input_form"):
         youtube_url = st.text_area(
-            label="What is the YouTube video URL?",
-            max_chars=200
+            label="YouTube Video URL",
+            max_chars=200,
+            placeholder="Enter the full YouTube video URL here"
         )
         query = st.text_area(
-            label="Ask me about the video?",
+            label="Ask me about the video",
             max_chars=200,
+            placeholder="Type your question about the video here",
             key="query"
         )
         openai_api_key = st.text_input(
             label="OpenAI API Key",
-            key="openai_api_key",
+            type="password",
             max_chars=200,
-            type="password"
+            placeholder="Paste your OpenAI API Key here"
         )
-        "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
-        submit_button = st.form_submit_button(label='Submit')
+        st.markdown("[Get an OpenAI API key](https://platform.openai.com/account/api-keys)")
+        st.markdown("[View the source code](https://github.com/Clffordojuka/YouTube-Transcriber.git)")
 
-if submit_button and query and youtube_url:
-    if not openai_api_key:
-        st.info("Please add your OpenAI API key to continue.")
+        submit_button = st.form_submit_button(label="Submit")
+
+if submit_button:
+    # Validate inputs
+    if not youtube_url.strip():
+        st.warning("Please enter a YouTube video URL.")
         st.stop()
-    else:
-        # Set API key dynamically
-        lch.set_api_key(openai_api_key)
+    if not query.strip():
+        st.warning("Please enter a question about the video.")
+        st.stop()
+    if not openai_api_key.strip():
+        st.warning("Please add your OpenAI API key to continue.")
+        st.stop()
 
+    # Set OpenAI API key for this session
+    os.environ["OPENAI_API_KEY"] = openai_api_key
+    client = OpenAI()
+
+    # Display a spinner while processing
+    with st.spinner("Fetching transcript and generating response..."):
         try:
-            # Add debug information
-            st.info("Fetching transcript...")
-            transcript = lch.get_transcript(youtube_url)
-            
-            if not transcript:
-                st.error("Could not fetch transcript. Please check if the video has captions available.")
-                st.stop()
-                
-            st.info("Creating database...")
-            db = lch.create_db_from_youtube(youtube_url)
-            
-            st.info("Getting response...")
+            # Create vector database from YouTube transcript
+            db = lch.create_db_from_youtube_video_url(youtube_url)
+
+            # Get answer to the user's query based on transcript
             response, docs = lch.get_response_from_query(db, query)
 
-            st.subheader("📌 Answer:")
+            st.subheader("Answer:")
             st.text(textwrap.fill(response, width=85))
-
-            with st.expander("🔎 Transcript snippets used"):
-                for d in docs:
-                    st.write(d)
-
         except Exception as e:
-            st.error(f"Error: {e}")
-            # Add more detailed error information
-            import traceback
-            st.error(f"Detailed error: {traceback.format_exc()}")
+            st.error(f"An error occurred: {e}")
