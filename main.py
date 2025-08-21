@@ -45,16 +45,16 @@ if submit_button:
         st.warning("Please add your OpenAI API key to continue.")
         st.stop()
 
-    # Set OpenAI API key for this session
     os.environ["OPENAI_API_KEY"] = openai_api_key
+
     client = OpenAI()
 
     with st.spinner("Fetching transcript and generating response..."):
         try:
-            # Create FAISS index and vector DB from transcript (embedding done via OpenAI SDK inside helper)
+            # Build vector DB (FAISS index) from transcript
             db = lch.create_db_from_youtube_video_url(youtube_url)
 
-            # Query and get answer
+            # Retrieve answer from query
             response, docs = lch.get_response_from_query(db, query)
 
             st.subheader("Answer:")

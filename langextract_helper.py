@@ -7,23 +7,28 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# OPENAI_API_KEY is set in environment
 if "OPENAI_API_KEY" not in os.environ:
     raise ValueError("Please set OPENAI_API_KEY in your environment or .env file")
 
 client = OpenAI()
 
 def get_openai_embeddings(texts):
-    # texts: list of strings to embed
+    """
+    Generate embeddings for a list of texts using OpenAI embedding model.
+    Returns numpy float32 array of shape (len(texts), embedding_dim).
+    """
     response = client.embeddings.create(
         model="text-embedding-ada-002",
         input=texts,
     )
-    # Extract embeddings
     embeddings_list = [data['embedding'] for data in response.data]
     return np.array(embeddings_list).astype('float32')
 
-
 def fetch_youtube_transcript(video_url: str) -> str:
+    """
+    Fetch YouTube transcript text for the given URL.
+    """
     if "v=" in video_url:
         video_id = video_url.split("v=")[-1].split("&")[0]
     else:
@@ -32,8 +37,10 @@ def fetch_youtube_transcript(video_url: str) -> str:
     transcript_text = " ".join([entry['text'] for entry in transcript_data])
     return transcript_text
 
-
 def chunk_text(text: str, chunk_size=1000, overlap=100):
+    """
+    Split large text into overlapping chunks of approximately chunk_size words.
+    """
     words = text.split()
     chunks = []
     start = 0
@@ -44,22 +51,29 @@ def chunk_text(text: str, chunk_size=1000, overlap=100):
         start += chunk_size - overlap
     return chunks
 
-
 def create_faiss_index(text_chunks):
+    """
+    Creates a FAISS index from text chunks embeddings.
+    """
     embed_vectors = get_openai_embeddings(text_chunks)
     dim = embed_vectors.shape[1]
     index = faiss.IndexFlatL2(dim)
     index.add(embed_vectors)
     return index
 
-
 def similarity_search(index, query, text_chunks, k=4):
+    """
+    Perform similarity search for query embedding on the FAISS index.
+    Returns top k most similar chunks.
+    """
     query_embed = get_openai_embeddings([query])
     distances, indices = index.search(query_embed, k)
-    return [text_chunks[i] for i in indices]
-
+    return [text_chunks[i] for i in indices[0]]
 
 def get_answer_from_docs(docs, question):
+    """
+    Uses OpenAI GPT-4 chat completion to answer question based on provided docs.
+    """
     docs_text = " ".join(docs)
     prompt = f"""
 You are a helpful assistant answering questions about YouTube videos based on the transcript only.
@@ -76,16 +90,21 @@ Answer in a detailed and factual manner. If not enough information is available,
     )
     return response.choices[0].message.content.strip()
 
-
-# Example usage:
-if __name__ == "__main__":
-    video_url = "https://www.youtube.com/watch?v=YOUR_VIDEO_ID"
+def create_db_from_youtube_video_url(video_url: str):
+    """
+    High-level function that fetches transcript, chunks text, embeds, and creates FAISS index.
+    Returns a dict containing the FAISS index and the chunks.
+    """
     transcript = fetch_youtube_transcript(video_url)
     chunks = chunk_text(transcript)
     faiss_index = create_faiss_index(chunks)
+    return {"index": faiss_index, "chunks": chunks}
 
-    query = "Your question about the video here"
-    relevant_chunks = similarity_search(faiss_index, query, chunks, k=4)
-    answer = get_answer_from_docs(relevant_chunks, query)
-
-    print("Answer:", answer)
+def get_response_from_query(db, query: str, k=4):
+    """
+    Search the db for the top k relevant chunks and generate an answer using GPT-4.
+    Returns tuple of (answer text, relevant chunks).
+    """
+    docs = similarity_search(db["index"], query, db["chunks"], k)
+    answer = get_answer_from_docs(docs, query)
+    return answer, docs
